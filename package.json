@@ -1,0 +1,23 @@
+{
+  "name": "auth-test",
+  "main.js": "app.js",
+  "author": "Swapnil Upadhyay",
+  "version": "1.0.0",
+  "description": "A simple authentication app",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.3.0",
+    "body-parser": "^1.15.0",
+    "co": "^4.6.0",
+    "co-express": "^1.2.1",
+    "connect-redis": "^3.0.2",
+    "express": "^4.13.4",
+    "express-handlebars": "^3.0.0",
+    "express-session": "^1.13.0",
+    "mongodb": "^2.1.7",
+    "node-ini": "^1.0.0",
+    "passport": "^0.3.2",
+    "passport-local": "^1.0.0",
+    "redis": "^2.5.0-1"
+  }
+}
