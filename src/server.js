@@ -56,7 +56,7 @@ module.exports= function(db,passportRepo){
 		else
 		{
 			console.log("could not log in");
-			req.session.error = "could not log in . Please try again";
+			req.session.error = "Username does not exists . Please try again";
 			done(null,req.user);
 		}
 	})));
@@ -162,5 +162,46 @@ module.exports= function(db,passportRepo){
 	});
 
 	/////////////////////////////////////////////////////////////////
+
+	app.use(function (req, res, next) {
+      next(new Error('NOT_FOUND'));
+    });
+
+	////////////////////////////////////////////////////////////////
+    // Error handler
+  app.use(function (err, req, res, next) {
+      if (!err) {
+        return next();
+      }
+
+      var predefinedErrs = {
+        NOT_FOUND        : { code: 404, msg: 'Requested resource was not found'                      },
+        INVALID_BROKER   : { code: 422, msg: 'Broker name missing or invalid'                        },
+        INVALID_CHECKSUM : { code: 401, msg: 'Checksum mismatch'                                     },
+        INVALID_IP       : { code: 422, msg: 'IP address of client does not match passed IP address' },
+        MISSING_TOKEN    : { code: 422, msg: 'Broker session token missing'                          },
+        MISSING_TS       : { code: 422, msg: 'Timestamp missing'                                     },
+        REQ_EXPIRED      : { code: 422, msg: 'Attach request has expired'                            },
+        FB_DISABLED      : { code: 400, msg: 'Facebook login has been disabled'                      },
+        FB_STATE_MISMATCH: { code: 401, msg: 'State returned from FB does not match server\'s'       }
+      };
+
+      var response = {
+        http_code : 500,
+        error_code: 'SERVER_ERR',
+        error_msg : 'Internal server error'
+      };
+
+      if (predefinedErrs[err.message]) {
+        response.error_code = err.message;
+        response.http_code  = predefinedErrs[err.message].code;
+        response.error_msg  = predefinedErrs[err.message].msg;
+      }
+
+      res.status(response.http_code);
+      res.json(response);
+	});
+	/////////////////////////////////////////////////////////////////
+
 	return app;
 };
