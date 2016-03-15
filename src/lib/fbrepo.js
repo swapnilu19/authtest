@@ -9,15 +9,19 @@ fbrepo.prototype.fetchAndUpdateRecord = function(profile){
 	return co(function*(){
 		var doc = yield that.db.collection('userinfo')
 			.findOne({
-				'username': profile.displayName
+				'id': profile.id
 			});
 		if(doc)
+		{
+			console.log("user found");
 			return doc;
+		}
 		else
 		{
 			doc={};
+			doc.id=profile.id;
 			doc.username=profile.displayName;
-			doc.avatar = "http://bootdey.com/img/Content/avatar/avatar1.png";
+			doc.avatar = profile.photos	? profile.photos[0].value : "http://bootdey.com/img/Content/avatar/avatar1.png";
 			var res = that.db.collection('userinfo').insert(doc);
 			return doc;
 		}

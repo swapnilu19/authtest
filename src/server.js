@@ -10,6 +10,7 @@ var passport					=require('passport');
 var LocalStrategy 		=require('passport-local');
 var FacebookStrategy	=require('passport-facebook');
 var TwitterStrategy		=require('passport-twitter');
+var GoogleStrategy    =require('passport-google-oauth').OAuth2Strategy;
 var wrap							=require('co-express');
 
 var redisClient=redis.createClient({
@@ -20,7 +21,7 @@ var redisClient=redis.createClient({
 	});
  
 
-module.exports= function(db,passportRepo,fbrepo,twitterrepo){
+module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 	var app = express();
 ////////////////////////////////////////////////////////////////////////
 
@@ -34,11 +35,28 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo){
 		done(null,obj);
 	});
 	
+	passport.use('google',new GoogleStrategy({
+		clientID					:	config.google.appid,
+		clientSecret			:	config.google.appsecret,
+		callbackURL				:	config.google.callbackurl
+	},wrap(function* (token,refreshToken,profile,done){
+		var user = yield googlerepo.fetchAndUpdateRecord(profile);
+    if(user)
+    {
+      console.log(user);
+      done(null,user);
+    }
+    else
+    {
+      done(null,null);
+    }
+	})));
 
 	passport.use('facebook',new FacebookStrategy({
 		clientID					: config.fb.appid,
 		clientSecret			: config.fb.appsecret,
-		callbackURL				:	config.fb.callbackurl
+		callbackURL				:	config.fb.callbackurl,
+		profileFields			:	['id','displayName','picture.type(large)']
 	},wrap(function* (access_token, refresh_token, profile,done){
 		var user = yield fbrepo.fetchAndUpdateRecord(profile);
 		if(user)
@@ -217,6 +235,15 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo){
 		successRedirect	:	'/',
 		failureRedirect	:	'/signin'
 	}));
+
+	/////////////////////////////////////////////////////////////////
+
+	app.get('/auth/google',passport.authenticate('google',{ scope : ['profile', 'email'] }));
+
+  app.get('/auth/google/callback',passport.authenticate('google',{
+    successRedirect : '/',
+    failureRedirect : '/signin'
+  }));
 
 	/////////////////////////////////////////////////////////////////
 
