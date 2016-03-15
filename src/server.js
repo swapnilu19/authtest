@@ -9,6 +9,7 @@ var config 						=require('./../config');
 var passport					=require('passport');
 var LocalStrategy 		=require('passport-local');
 var FacebookStrategy	=require('passport-facebook');
+var TwitterStrategy		=require('passport-twitter');
 var wrap							=require('co-express');
 
 var redisClient=redis.createClient({
@@ -19,7 +20,7 @@ var redisClient=redis.createClient({
 	});
  
 
-module.exports= function(db,passportRepo,fbrepo){
+module.exports= function(db,passportRepo,fbrepo,twitterrepo){
 	var app = express();
 ////////////////////////////////////////////////////////////////////////
 
@@ -50,6 +51,24 @@ module.exports= function(db,passportRepo,fbrepo){
 			done(null,null);
 		}
 	})	
+	));
+
+	passport.use('twitter',new TwitterStrategy({
+		consumerKey			:	config.twitter.appkey,
+		consumerSecret	:	config.twitter.appsecret,
+		callbackURL			:	config.twitter.callbackurl
+	},wrap(function* (token,tokenSecret,profile,done){
+		var user = yield twitterrepo.fetchAndUpdateRecord(profile);
+		if(user)
+		{
+			console.log(user);
+			done(null,user);	
+		}
+		else
+		{
+			done(null,null);
+		}
+	})
 	));
 
 	passport.use('local-signin', new LocalStrategy({passReqToCallback:true},wrap(function* (req,username,password,done){
@@ -188,11 +207,19 @@ module.exports= function(db,passportRepo,fbrepo){
 	app.get('/auth/facebook/callback',passport.authenticate('facebook',{
 		successRedirect	: '/',
 		failureRedirect	: '/signin'
-	})
-	);
+	}));
+	
+	/////////////////////////////////////////////////////////////////
+
+	app.get('/auth/twitter',passport.authenticate('twitter'));
+
+	app.get('/auth/twitter/callback',passport.authenticate('twitter',{
+		successRedirect	:	'/',
+		failureRedirect	:	'/signin'
+	}));
 
 	/////////////////////////////////////////////////////////////////
-/*
+
 	app.use(function (req, res, next) {
       next(new Error('NOT_FOUND'));
     });
@@ -230,7 +257,7 @@ module.exports= function(db,passportRepo,fbrepo){
 
       res.status(response.http_code);
       res.json(response);
-	});*/
+	});
 	/////////////////////////////////////////////////////////////////
 
 	return app;
