@@ -1,14 +1,15 @@
-var express 			=require('express');
-var co 						=require('co');
-var bodyParser 		=require('body-parser');
-var redis					=require('redis');
-var exphbs 				=require('express-handlebars');
-var session 			=require('express-session');
-var SessRedis 		=require('connect-redis')(session);
-var config 				=require('./../config');
-var passport			=require('passport');
-var LocalStrategy =require('passport-local');
-var wrap					=require('co-express');
+var express 					=require('express');
+var co 								=require('co');
+var bodyParser 				=require('body-parser');
+var redis							=require('redis');
+var exphbs 						=require('express-handlebars');
+var session 					=require('express-session');
+var SessRedis 				=require('connect-redis')(session);
+var config 						=require('./../config');
+var passport					=require('passport');
+var LocalStrategy 		=require('passport-local');
+var FacebookStrategy	=require('passport-facebook');
+var wrap							=require('co-express');
 
 var redisClient=redis.createClient({
 			host 			: config.redis.host,
@@ -18,7 +19,7 @@ var redisClient=redis.createClient({
 	});
  
 
-module.exports= function(db,passportRepo){
+module.exports= function(db,passportRepo,fbrepo){
 	var app = express();
 ////////////////////////////////////////////////////////////////////////
 
@@ -32,6 +33,25 @@ module.exports= function(db,passportRepo){
 		done(null,obj);
 	});
 	
+
+	passport.use('facebook',new FacebookStrategy({
+		clientID					: config.fb.appid,
+		clientSecret			: config.fb.appsecret,
+		callbackURL				:	config.fb.callbackurl
+	},wrap(function* (access_token, refresh_token, profile,done){
+		var user = yield fbrepo.fetchAndUpdateRecord(profile);
+		if(user)
+		{
+			console.log(user);
+			done(null,user);
+		}
+		else
+		{
+			done(null,null);
+		}
+	})	
+	));
+
 	passport.use('local-signin', new LocalStrategy({passReqToCallback:true},wrap(function* (req,username,password,done){
 		var doc = yield passportRepo.localAuth(username,password);
 		var user={
@@ -160,9 +180,19 @@ module.exports= function(db,passportRepo){
 		res.redirect('/');
 		req.session.notice  = "You have successfully been logged out " + name + "!";
 	});
-
+	
 	/////////////////////////////////////////////////////////////////
 
+	app.get('/auth/facebook',passport.authenticate('facebook',{scope:'email'}));
+
+	app.get('/auth/facebook/callback',passport.authenticate('facebook',{
+		successRedirect	: '/',
+		failureRedirect	: '/signin'
+	})
+	);
+
+	/////////////////////////////////////////////////////////////////
+/*
 	app.use(function (req, res, next) {
       next(new Error('NOT_FOUND'));
     });
@@ -200,7 +230,7 @@ module.exports= function(db,passportRepo){
 
       res.status(response.http_code);
       res.json(response);
-	});
+	});*/
 	/////////////////////////////////////////////////////////////////
 
 	return app;
