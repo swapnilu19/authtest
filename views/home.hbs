@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html>
+<body>
 <!-- views/home.handlebars -->
 {{#if username}}
   <div class="jumbotron">
@@ -11,7 +14,10 @@
     <div class="panel-body">
       <p>Username: {{username}}</p>
       <p>Avatar: <img src= "{{avatar}}"/></p>
-    </div>
+			<div style="padding-left:45px">
+				<button id= "dash" class="btn btn-primary btn-md" >Dashboard </button>
+    	</div>
+		</div>
   </div>
 
 {{else}}
@@ -27,3 +33,14 @@
   </div>
 
 {{/if}}
+	<script src ="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+
+	<script>
+		$(document).ready(function(){
+			$("#dash").click(function(){
+				window.location.href="http://127.0.0.1:8091/dashboard";
+			});
+		});
+	</script>
+</body>
+</html>

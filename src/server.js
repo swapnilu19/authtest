@@ -8,7 +8,7 @@ var SessRedis 				=require('connect-redis')(session);
 var config 						=require('./../config');
 var passport					=require('passport');
 var LocalStrategy 		=require('passport-local');
-var FacebookStrategy	=require('passport-facebook');
+var FacebookStrategy	=require('passport-facebook').Strategy;
 var TwitterStrategy		=require('passport-twitter');
 var GoogleStrategy    =require('passport-google-oauth').OAuth2Strategy;
 var wrap							=require('co-express');
@@ -72,9 +72,9 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 	));
 
 	passport.use('twitter',new TwitterStrategy({
-		consumerKey			:	config.twitter.appkey,
-		consumerSecret	:	config.twitter.appsecret,
-		callbackURL			:	config.twitter.callbackurl
+		consumerKey				:	config.twitter.appkey,
+		consumerSecret		:	config.twitter.appsecret,
+		callbackURL				:	config.twitter.callbackurl
 	},wrap(function* (token,tokenSecret,profile,done){
 		var user = yield twitterrepo.fetchAndUpdateRecord(profile);
 		if(user)
@@ -185,26 +185,42 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 	/////////////////////////////////////////////////////////////////////
 
 	app.get('/',function(req,res){
+		res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
 		res.render('home',req.user);
 	});
 
 	////////////////////////////////////////////////////////////////////
 
+	app.get('/dashboard',function(req,res){
+		res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+		if(req.user)
+			res.render('dashboard',req.user);
+		else
+			res.redirect('signin');
+	});
+
+	////////////////////////////////////////////////////////////////////
+
 	app.get('/signin',function(req,res){
-		res.render('signin');
+	res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+	console.log(req.user);
+		if(req.user)
+			res.redirect('/');
+		else
+			res.render('signin');
 	});
 
 	////////////////////////////////////////////////////////////////////
 
 	app.post('/local-reg',passport.authenticate('local-signup',{
-		successRedirect: ' /',
+		successRedirect: '/dashboard',
 		failureRedirect: '/signin'
 	}));
 
 	//////////////////////////////////////////////////////////////////
 
 	app.post('/login',passport.authenticate('local-signin',{
-		successRedirect: '/',
+		successRedirect: '/dashboard',
 		failureRedirect: '/signin'
 	}));
 
@@ -223,7 +239,7 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 	app.get('/auth/facebook',passport.authenticate('facebook',{scope:'email'}));
 
 	app.get('/auth/facebook/callback',passport.authenticate('facebook',{
-		successRedirect	: '/',
+		successRedirect	: '/dashboard',
 		failureRedirect	: '/signin'
 	}));
 	
@@ -232,7 +248,7 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 	app.get('/auth/twitter',passport.authenticate('twitter'));
 
 	app.get('/auth/twitter/callback',passport.authenticate('twitter',{
-		successRedirect	:	'/',
+		successRedirect	:	'/dashboard',
 		failureRedirect	:	'/signin'
 	}));
 
@@ -241,7 +257,7 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 	app.get('/auth/google',passport.authenticate('google',{ scope : ['profile', 'email'] }));
 
   app.get('/auth/google/callback',passport.authenticate('google',{
-    successRedirect : '/',
+    successRedirect : '/dashboard',
     failureRedirect : '/signin'
   }));
 
