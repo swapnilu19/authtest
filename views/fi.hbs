@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+body {
+    margin: 0;
+}
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    
+    background-color: #f1f1f1;
+    height: 100%;
+    overflow: auto;
+}
+li a {
+    display: block;
+    color: #000;
+    padding: 8px 0 8px 16px;
+    text-decoration: none;
+}
+
+li a.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+li a:hover:not(.active) {
+    background-color: #555;
+    color: white;
+}
+</style>
+</head>
+<body>
+<div style="width:25%;float:left" >
+	<ul id="list">
+  	<li ><a class="active" href="/dashboard">Add a crop</a></li>
+  	<li ><a href="/crops">Crops</a></li>
+  	<li ><a href="/add_requirement">Add a Requirement</a></li>
+		<li	><a	href="/requirements">Requirements Seeked</a><li>
+	</ul>
+</div>
+<div style="margin-left:50px;float:left">
+	<form id="new_crop" action="/add_crop" method="post">
+    	<div>
+        	<p></p>
+        	<label>Crop Name <span style="color:red">*</span>:</label>
+        	<input type="text" name="crop_name" required="true"/>
+    	</div>
+			<div>
+          <p></p>
+          <label>Region <span style="color:red">*</span>:</label>
+          <input type="text" name="region" required="true"/>
+      </div>
+			<div>
+          <p></p>
+          <label>Crop Area(in Hectares) <span style="color:red">*</span>:</label>
+          <input type="text" name="area" required="true"/>
+      </div>
+			<div>
+          <p></p>
+          <label>Sowing Date <span style="color:red">*</span>:</label>
+          <input type="text" name="seed_time" required="true"/>
+      </div>
+			<div>
+          <p></p>
+          <label>Expected Harvesting Date <span style="color:red">*</span>:</label>
+          <input type="text" name="harvesttime" required="true"/>
+      </div>
+			<div>
+          <p></p>
+          <label>Current stage of crop <span style="color:red">*</span>:</label>
+          <input type="text" name="stage" required="true"/>
+      </div>
+			<br/>
+    	<div>
+        	<input type="submit" class="btn btn-primary btn-sm" value="Add"/>
+    	</div>
+  	</form>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"</script>
+
+<script>
+  $(document).ready(function(){
+    
+  });
+</script>
+
+</body>
+</html>

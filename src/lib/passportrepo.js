@@ -1,5 +1,6 @@
 var co = require('co');
 var bcrypt = require('bcryptjs');
+var User = require('./../models/user');
 
 function passportrepo(db){
 	this.db= db;
@@ -9,7 +10,8 @@ passportrepo.prototype.localReg = function(username,password){
 	var that =this;
 	var hash = bcrypt.hashSync(password, 8);
 	var user = {
-		"username"	: username,
+		"email"			: username,
+		"username"	:	username,
 		"password"	: hash,
 		"avatar"		: "http://bootdey.com/img/Content/avatar/avatar1.png"
 	}; 
@@ -17,7 +19,7 @@ passportrepo.prototype.localReg = function(username,password){
 		
 		var doc = yield that.db.collection('userinfo')
 			.findOne({
-				'username' : username
+				'email' : username
 			});
 		if(doc)
 		{
@@ -29,9 +31,8 @@ passportrepo.prototype.localReg = function(username,password){
 			var ins = yield that.db.collection('userinfo').insert(user);
 			if(!ins)
 				console.log("failed to insert");
-			doc=null;
 		}
-		return doc;
+		return doc ? User.fromSrc('mongo',doc) : null ;
 	});
 };
 
@@ -40,7 +41,7 @@ passportrepo.prototype.localAuth = function(username,password){
 	return co(function* (){
 		var doc = yield that.db.collection('userinfo')
 			.findOne({
-				'username': username
+				'email': username
 			});
 		if(doc)
 		{
@@ -64,7 +65,6 @@ passportrepo.prototype.localAuth = function(username,password){
 			console.log("user does not exist");
 		}
 		return doc;
-
 	});
 };
 

@@ -21,7 +21,7 @@ var redisClient=redis.createClient({
 	});
  
 
-module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
+module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo){
 	var app = express();
 ////////////////////////////////////////////////////////////////////////
 
@@ -56,8 +56,9 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 		clientID					: config.fb.appid,
 		clientSecret			: config.fb.appsecret,
 		callbackURL				:	config.fb.callbackurl,
-		profileFields			:	['id','displayName','picture.type(large)']
+		profileFields			:	['id','displayName','picture.type(large)','emails']
 	},wrap(function* (access_token, refresh_token, profile,done){
+		
 		var user = yield fbrepo.fetchAndUpdateRecord(profile);
 		if(user)
 		{
@@ -74,8 +75,10 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 	passport.use('twitter',new TwitterStrategy({
 		consumerKey				:	config.twitter.appkey,
 		consumerSecret		:	config.twitter.appsecret,
-		callbackURL				:	config.twitter.callbackurl
+		callbackURL				:	config.twitter.callbackurl,
+		profileFields			:	['username','avatar','emails']
 	},wrap(function* (token,tokenSecret,profile,done){
+		console.log("profile");
 		var user = yield twitterrepo.fetchAndUpdateRecord(profile);
 		if(user)
 		{
@@ -106,14 +109,14 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 				console.log("Logged in as : " +user.username);
 				req.session.success = "You are successfully logged in " +user.username + "!";
 				user.avatar = doc.avatar;
-				req.user=user;
+				req.user=doc;
 			}
 			done(null,req.user);
 		}
 		else
 		{
 			console.log("could not log in");
-			req.session.error = "Username does not exists . Please try again";
+			req.session.error = "email does not exists . Please try again";
 			done(null,req.user);
 		}
 	})));
@@ -121,9 +124,9 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 	passport.use('local-signup', new LocalStrategy({passReqToCallback:true},wrap(function* (req,username,password,done){
 		var doc = yield passportRepo.localReg(username,password);
 		var user= {
-			'username' :username,
-			'password' :password,
-			'avatar'	 :"http://bootdey.com/img/Content/avatar/avatar1.png"
+			'username' 	:username,
+			'password' 	:password,
+			'avatar'	 	:"http://bootdey.com/img/Content/avatar/avatar1.png"
 		};
 		if(doc)
 		{
@@ -193,14 +196,121 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo){
 
 	app.get('/dashboard',function(req,res){
 		res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+		console.log(req.user);
 		if(req.user)
-			res.render('dashboard',req.user);
+		{
+			if(req.user.role)
+			{
+				console.log("role= ",req.user.role);
+				switch(req.user.role){
+					case 'fi':
+						res.render('fi',req.user);
+						break;
+	
+					case 'sd'	:
+						res.render('sd',req.user);
+						break;
+					
+					case 'admin':
+						res.render('admin',req.user);
+						break;
+	
+					default	:
+						next('bad_role');
+				}		
+			}
+			else
+				res.render('dashboard',req.user);
+		}
 		else
-			res.redirect('signin');
+			res.redirect('/signin');
 	});
 
 	////////////////////////////////////////////////////////////////////
 
+	app.get('/add_requirement',function(req,res){
+		if(req.user && req.user.role=="fi")
+		{
+			res.render('add_requirement',req.user);
+		}
+		else
+			res.redirect('/');
+	});
+
+	///////////////////////////////////////////////////////////////////
+
+	app.get('/requirements',wrap(function* (req,res){
+		if(req.user && req.user.role=="fi")
+		{
+			var requirements = yield croprepo.fetchRequirements(req.user);
+			var usr = req.user;
+			usr.requirements=requirements;
+			res.render('requirements',usr);
+		}
+		else
+			res.redirect('/');
+	}));
+
+	///////////////////////////////////////////////////////////////////
+
+	app.post('/add_requirement',wrap(function* (req,res){
+		if(req.user && req.user.role=="fi")
+		{
+			var requirement = {
+				askedby					:	req.user,
+				seekeremail			:	req.user.email,
+				crop						:	req.body.req_crop,
+				items						:	req.body.items,
+				region					:	req.body.req_region,
+				fulfilled				:	"No",
+				time_fullfilled	:	null,
+				timeofrequest		:	(new Date()).getTime(),
+			};
+			var result	=	yield croprepo.addRequirement(requirement);
+			res.redirect('/requirements');
+		}  
+		else
+			res.redirect('/');
+	}));
+
+ ////////////////////////////////////////////////////////////////////
+
+  app.get('/crops',wrap(function* (req,res){
+    if(req.user && req.user.role=="fi")
+    {
+      var crops = yield croprepo.fetchCrops(req.user);
+			var usr = req.user;
+			usr.crops=crops;
+      res.render('crops',usr);
+    }
+    else
+      res.redirect('/');
+  }));
+
+  ///////////////////////////////////////////////////////////////////
+
+  app.post('/add_crop',wrap(function* (req,res){
+    if(req.user && req.user.role=="fi")
+    {
+      var crop = {
+        crop        : req.body.crop_name,
+        region      : req.body.region,
+        area        : req.body.area,
+        time        : (new Date()).getTime(),
+        time_sowed  : req.body.seed_time,
+        harvesttime : req.body.harvesttime,
+        stage       : req.body.stage,
+        updatedBy   : req.user,
+        useremail   : req.user.email
+      };
+      var result  = yield croprepo.addCrop(crop);
+      res.redirect('/crops');
+    }
+    else
+      res.redirect('/');
+  }));
+
+	///////////////////////////////////////////////////////////////////
 	app.get('/signin',function(req,res){
 	res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
 	console.log(req.user);

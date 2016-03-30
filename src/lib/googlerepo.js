@@ -1,4 +1,5 @@
 var co = require('co');
+var User = require('./../models/user');
 
 function googlerepo(db){
   this.db=db;
@@ -12,7 +13,9 @@ googlerepo.prototype.fetchAndUpdateRecord = function(profile){
         'email': profile.emails[0].value
       });
     if(doc)
-      return doc;
+		{
+			console.log("user found");
+		}
     else
     {
       doc={};
@@ -20,8 +23,8 @@ googlerepo.prototype.fetchAndUpdateRecord = function(profile){
 			doc.username=profile.displayName;
       doc.avatar = profile.photos ? profile.photos[0].value : "http://bootdey.com/img/Content/avatar/avatar1.png";
       var res = that.db.collection('userinfo').insert(doc);
-      return doc;
     }
+		return doc ? User.fromSrc('mongo',doc) : null;
   });
 };
 

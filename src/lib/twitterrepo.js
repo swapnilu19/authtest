@@ -1,4 +1,5 @@
 var co = require('co');
+var User =require('./../models/user');
 
 function twitterrepo(db){
   this.db=db;
@@ -12,15 +13,15 @@ twitterrepo.prototype.fetchAndUpdateRecord = function(profile){
         'username': profile.displayName
       });
     if(doc)
-      return doc;
+      console.log("user found");
     else
     {
       doc={};
       doc.username=profile.displayName;
       doc.avatar = profile.photos[0].value;
       var res = that.db.collection('userinfo').insert(doc);
-      return doc;
     }
+		return doc ? User.fromSrc('mongo',doc) : null;
   });
 };
 

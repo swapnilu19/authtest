@@ -14,6 +14,7 @@
     "express": "^4.13.4",
     "express-handlebars": "^3.0.0",
     "express-session": "^1.13.0",
+    "lodash": "^4.6.1",
     "mongodb": "^2.1.7",
     "node-ini": "^1.0.0",
     "passport": "^0.3.2",

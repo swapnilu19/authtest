@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+body {
+    margin: 0;
+}
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    
+    background-color: #f1f1f1;
+    height: 100%;
+    overflow: auto;
+}
+li a {
+    display: block;
+    color: #000;
+    padding: 8px 0 8px 16px;
+    text-decoration: none;
+}
+
+li a.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+li a:hover:not(.active) {
+    background-color: #555;
+    color: white;
+}
+</style>
+</head>
+<body>
+<div style="width:25%;float:left" >
+	<ul id="list">
+  	<li ><a	href="/dashboard">Add a crop</a></li>
+  	<li ><a href="/crops">Crops</a></li>
+  	<li ><a href="/add_requirement">Add a Requirement</a></li>
+		<li	><a	class="active" href="/requirements">Requirements Seeked</a><li>
+	</ul>
+</div>
+<div style="margin-left:50px;float:left;width:70%">
+	<div >
+    <h3>Requirements</h3>
+    <hr />
+    <table style="width:100%">
+		<tr>
+          <td><label>Added on</label></td>
+          <td><label>Added by</label></td>
+          <td><label>Crop</label></td>
+          <td><label>Requirements</label></td>
+          <td><label>Region</label></td>
+          <td><label>Fullfilled?</label></td>
+		</tr>
+      {{#each requirements}}
+        <tr>
+          <td>{{this.timeofrequest}}</td>
+          <td>{{this.seekeremail}}</td>
+					<td>{{this.crop}}</td>
+					<td>{{this.items}}</td>
+					<td>{{this.region}}</td>
+					<td>{{this.fulfilled}}</td>
+        </tr>
+      {{/each}}
+    </table>
+    <br />
+  </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"</script>
+
+<script>
+  $(document).ready(function(){
+    
+  });
+</script>
+
+</body>
+</html>

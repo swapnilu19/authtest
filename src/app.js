@@ -6,6 +6,7 @@ var PassportRepo			= require('./lib/passportrepo');
 var fbRepo						=	require('./lib/fbrepo');
 var twitterRepo				=	require('./lib/twitterrepo');
 var googleRepo				=	require('./lib/googlerepo');
+var cropRepo					=	require('./lib/croprepo');
 co(function* (){
 
 	var mongodb = yield mongoClient.connect(config.mongodb.uri);
@@ -13,7 +14,8 @@ co(function* (){
 	var fbrepo	= new fbRepo(mongodb);
 	var twitterrepo	=	new twitterRepo(mongodb);
 	var googlerepo	= new googleRepo(mongodb);
-	var app = makeServer(mongodb,passportRepo,fbrepo,twitterrepo,googlerepo);
+	var croprepo		= new cropRepo(mongodb);
+	var app = makeServer(mongodb,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo);
 	
 	app.listen(config.server.port,function(err){
 		if(err)
