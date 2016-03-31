@@ -112,18 +112,19 @@ cropRepo.prototype.addTaskByCrop	=	function(user,task,crop){
 	return co(function*	(){
 		var tasks=[];
 		var crops = yield that.mongodb.collection('crops').find({'crop':crop}).toArray();
-		for(int i=0;i<crops.length;i++)
+		for(var i=0;i<crops.length;i++)
 		{
 			var task = {
-				'task'             =task,
-  			'region'           =crops[i].region,
-  			'assignedOn'       =(new Date()).getTime(),
-  			'taskStatus'       ="Pending",
-  			'completedOn'      =0,
-  			'assignedBy'       =user,
-  			'assignedTo'       =crops[i].updatedBy,
-  			'assignerEmail'    =user.email,
-  			'assigneeEmail'    =crops[i].useremail,
+				'task'							:task,
+				'crop'							:crop,							
+  			'region'						:crops[i].region,
+  			'assignedOn'				:(new Date()).getTime(),
+  			'taskStatus'				:"Pending",
+  			'completedOn'				:0,
+  			'assignedBy'				:user,
+  			'assignedTo'				:crops[i].updatedBy,
+  			'assignerEmail'			:user.email,
+  			'assigneeEmail'			:crops[i].useremail,
 			}
 			tasks.push(task);
 		}
@@ -134,18 +135,19 @@ cropRepo.prototype.addTaskByCrop	=	function(user,task,crop){
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-cropRepo.prototype.addTaskbyFi	=	function(user,task,fi){
+cropRepo.prototype.addTaskbyFi	=	function(user,task,crop,fi){
 	that=this;
 	var taskk={
-		'task'             =task,
-		'region'           =fi.region,
-		'assignedOn'       =(new Date()).getTime(),
-		'taskStatus'       ="Pending",
-		'completedOn'      =0,
-		'assignedBy'       =user,
-		'assignedTo'       =fi,
-		'assignerEmail'    =user.email,
-		'assigneeEmail'    =fi.email,
+		'task'							:task,
+		'crop'							:crop,
+		'region'						:fi.region,
+		'assignedOn'				:(new Date()).getTime(),
+		'taskStatus'				:"Pending",
+		'completedOn'				:0,
+		'assignedBy'				:user,
+		'assignedTo'				:fi,
+		'assignerEmail'			:user.email,
+		'assigneeEmail'			:fi.email,
 	};
 	return co(function* (){
 		var res	= yield that.mongodb.collection('tasks').insert(taskk);
@@ -155,7 +157,7 @@ cropRepo.prototype.addTaskbyFi	=	function(user,task,fi){
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-croprepo.prototype.fetchTask	=	function(user){
+cropRepo.prototype.fetchTasks	=	function(user){
 	that =this;
 	return co(function* (){
 		var tasks = yield that.mongodb.collection('tasks').find({assigneeEmail:user.email}).toArray();

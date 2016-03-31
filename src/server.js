@@ -310,6 +310,20 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
       res.redirect('/');
   }));
 
+	//////////////////////////////////////////////////////////////////
+
+	 app.get('/tasks',wrap(function* (req,res){
+    if(req.user && req.user.role=="fi")
+    {
+      var tasks = yield croprepo.fetchTasks(req.user);
+      var usr = req.user;
+      usr.tasks=tasks;
+      res.render('tasks',usr);
+    }
+    else
+      res.redirect('/');
+  }));
+
 	///////////////////////////////////////////////////////////////////
 	app.get('/signin',function(req,res){
 	res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');

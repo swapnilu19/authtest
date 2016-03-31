@@ -2,6 +2,7 @@ var _ = require('lodash');
 
 function Task(){
   this.task           	="",
+	this.crop							="",
   this.region         	="",
   this.assignedOn				=0,
 	this.taskStatus				="Pending",
@@ -18,6 +19,7 @@ Task.fromSrc=function(src,data){
     case 'mongo' :
       _.each([
         'task',
+				'crop',
         'region',
         'assignedOn',
         'taskStatus',
