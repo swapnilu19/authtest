@@ -6,6 +6,7 @@ function User(){
 	this.avatar="";
 	this.role="";
 	this.region="";
+	this.locat="";
 }
 
 User.fromSrc = function(src,data) {
@@ -18,7 +19,8 @@ User.fromSrc = function(src,data) {
 				'email',
 				'avatar',
 				'role',
-				'region'
+				'region',
+				'locat'
 			],function (key){
 				if(data[key]){
 					usr[key] = data[key];

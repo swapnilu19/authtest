@@ -6,8 +6,9 @@ function Requirement(){
 	this.crop							="",
 	this.items						="",
 	this.region						="",
-	this.fullfilled				="No",
-	this.time_fullfilled	="",
+	this.locat						="",
+	this.fulfilled				="No",
+	this.time_fulfilled	="",
 	this.timeofrequest		=""
 }
 
@@ -22,6 +23,7 @@ Requirement.fromSrc = function(src, data){
 				'crop',
 				'items',
 				'region',
+				'locat',
 				'fullilled',
 				'time_fullfilled',
 				'timeofrequest'

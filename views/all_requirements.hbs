@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <body ng-app="mymodal">
-<!--views/pending_requirements.hbs-->
+<!--views/all_requirements.hbs-->
 <style>
 
 body {
@@ -68,61 +68,58 @@ li a:hover:not(.active) {
 <div style="width:25%;float:left" >
 	<ul id="list">
   	<li ><a	href="/dashboard">Field Inspectors</a></li>
-  	<li ><a href="/requirements">All Requirements</a></li>
+  	<li ><a class="active" href="/requirements">All Requirements</a></li>
   	<li ><a href="/pend_requirements">Pending Requirements</a></li>
 		<li	><a	href="/ful_requirements">Fulfilled Requirements</a><li>
-		<li ><a class="active"href="/tasks">Tasks</a><li>
+		<li ><a href="/tasks">Tasks</a><li>
 	</ul>
 </div>
 <div style="margin-left:50px;float:left;width:70%">
-
 	<div ng-controller="MainCtrl">
-    <h3>Tasks</h3>
+    <h3>All Requirements</h3>
     <hr />
-		<table class="table table-hover" style="width:100%" id="mytable">
-    <thead>
-    <tr>
-          <td hidden><label>ID</label></td>
-					<td><label>Added On</label></td>
-          <td><label>Task</label></td>
+    <table class="table table-hover" style="width:100%" id="mytable">
+		<thead>
+		<tr>
+          <td><label>Added on</label></td>
+          <td><label>Added by</label></td>
           <td><label>Crop</label></td>
-          <td><label>Region</label></td>
-          <td><label>Status</label></td>
-          <td><label>Assigned By</label></td>
-    </tr>
-    </thead>
-    <tbody>
-      {{#each tasks}}
+          <td><label>Requirements</label></td>
+          <td><label>Location</label></td>
+          <td><label>Fullfilled?</label></td>
+		</tr>
+		</thead>
+		<tbody>
+      {{#each requirements}}
         <tr>
-          <td hidden>{{this._id}}</td>
-					<td>{{this.assignedOn}}</td>
-          <td>{{this.task}}</td>
-          <td>{{this.crop}}</td>
-          <td>{{this.region}}</td>
-          <td>{{this.taskStatus}}</td>
-          <td>{{this.assignerEmail}}</td>
+          <td>{{this.timeofrequest}}</td>
+          <td>{{this.seekeremail}}</td>
+					<td>{{this.crop}}</td>
+					<td>{{this.items}}</td>
+					<td>{{this.locat}}</td>
+					<td>{{this.fulfilled}}</td>
         </tr>
       {{/each}}
-    </tbody>
+		</tbody>
     </table>
-
+		
 		<div class="modal fade" id="myModal">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title">Task Status</h4>
+            <h4 class="modal-title">Requirement Status</h4>
        	  </div>
           <div class="modal-body">
 						<div class= "contain">
 							<fieldset>
-  							<legend>Change Task Status</legend>
-  							<label for="pending">
-    							<input type="radio" value="Pending" name="task_status" id="pending"> <span>Pending</span>
+  							<legend>Change Requirement Status</legend>
+  							<label for="fulfill">
+    							<input type="radio" value="Fulfilled" name="req_status" id="fulfill"> <span>Fulfilled</span>
   							</label>
 
-  						<label for="completed">
-    						<input type="radio" value="Completed" name="task_status" id="completed"> <span>Completed</span>
+  						<label for="not_fulfill">
+    						<input type="radio" value="Not_Fulfilled" name="req_status" id="not_fulfill"> <span>Not Fulfilled</span>
   						</label>
 
 						</fieldset>
@@ -145,17 +142,22 @@ li a:hover:not(.active) {
 <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
 
 <script>
+	var tor;
+	var se;
 	var row;
-	var _id;
   $('table tbody tr ').on('click',function(){
-		_id=$(this).closest('tr').children()[0].textContent;
+		tor=$(this).closest('tr').children()[0].textContent;
+		se =$(this).closest('tr').children()[1].textContent;
 		row=$(this).index();
-		$("#myModal").modal("show");
+      //$.get("/sd/fi/req/stat",{id:$(this).closest('tr').children()[1].textContent},function(data,status){
+        //alert("Data: " + data + "\nStatus: " + status);
+         $("#myModal").modal("show");
+			//});
 	});
 	$('#change').on('click',function(){
-		if($('input[name="task_status"]:checked').val())
+		if($('input[name="req_status"]:checked').val())
 		{
-			$.get("/sd/fi/task/stat",{stat:$('input[name="task_status"]:checked').val(),id:_id},function(data,status){
+			$.get("/sd/fi/req/stat",{fulfilled:$('input[name="req_status"]:checked').val(),timeofrequest:tor,seekeremail:se},function(data,status){
 				if(data && status)
 				{
 					alert("status changed");

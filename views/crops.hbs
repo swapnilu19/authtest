@@ -47,7 +47,8 @@ li a:hover:not(.active) {
 	<div >
     <h3>Crops</h3>
     <hr />
-    <table style="width:100%">
+    <table class="table table-hover" style="width:100%">
+		<thead>
 		<tr>
           <td><label>Crop</label></td>
           <td><label>Region</label></td>
@@ -56,6 +57,8 @@ li a:hover:not(.active) {
           <td><label>Expected Harvest Time</label></td>
           <td><label>Current Stage</label></td>
 		</tr>
+		</thead>
+		<tbody>
       {{#each crops}}
         <tr>
           <td>{{this.crop}}</td>
@@ -66,6 +69,7 @@ li a:hover:not(.active) {
 					<td>{{this.stage}}</td>
         </tr>
       {{/each}}
+			</tbody>
     </table>
     <br />
   </div>

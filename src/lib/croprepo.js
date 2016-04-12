@@ -1,4 +1,5 @@
 var co = require('co');
+var ObjectId  = require('mongodb').ObjectId;
 
 function cropRepo(mongodb)
 {
@@ -45,14 +46,33 @@ cropRepo.prototype.fetchRequirements = function(user){
 	});
 };
 
+//////////////////////////////////////////////////////////////////////////////////////////
+
+cropRepo.prototype.fetchRequirementsByEmail = function(email){
+  that = this;
+  return co(function* (){
+    var requirements = yield that.mongodb.collection('requirements').find({seekeremail:email}).toArray();
+    return requirements;
+  });
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-cropRepo.prototype.fetchFullfilledRequirements = function(user){
+cropRepo.prototype.fetchAllRequirements = function(user){
+  that = this;
+  return co(function* (){
+    var requirements = yield that.mongodb.collection('requirements').find({region:user.region}).toArray();
+    return requirements;
+  });
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+cropRepo.prototype.fetchFulfilledRequirements = function(user){
 	that=this;
 	return co(function* (){
 		var requirements = yield that.mongodb.collection('requirements')
 			.find({
-				seekeremail	:	user.email,
 				region			:	user.region,
 				fulfilled		:	"Yes"
 		}).toArray();
@@ -62,12 +82,11 @@ cropRepo.prototype.fetchFullfilledRequirements = function(user){
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-cropRepo.prototype.fetchPendingRequireMents = function(user){
+cropRepo.prototype.fetchPendingRequirements = function(user){
 	that=this;
   return co(function* (){
     var requirements = yield that.mongodb.collection('requirements')
       .find({
-        seekeremail : user.email,
         region      : user.region,
         fulfilled   : "No"
     }).toArray();
@@ -91,17 +110,41 @@ cropRepo.prototype.fetchRegionRequirements = function(user){
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-cropRepo.prototype.fulfillRequirement = function(requirement){
+cropRepo.prototype.updateRequirementStatus = function(tor,se,stat){
 	that = this;
+	var tof;
+	if(stat=="Yes")
+		tof=(new Date()).getTime();
+	else
+		tof=null;
 	return co(function* (){
 		var res = yield that.mongodb.collection('requirements')
 			.update({
-				_id:requirement.id
+				timeofrequest:parseInt(tor,10),
+				seekeremail:se
 			},
 			{
-				$set:{fulfilled:"Yes"}
+				$set:{fulfilled:stat,time_fulfilled:tof}
 			});
 		return res;
+	});
+};
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+cropRepo.prototype.updateTaskStatus = function(stat,id){
+	that=this;
+	var doc_id = new ObjectId(id);
+	var tof=null;
+	if(stat=="Completed")
+		tof =  (new Date()).getTime();
+	return co(function* (){
+		var res = yield that.mongodb.collection('tasks')
+			.update({_id:doc_id},
+			{
+				$set:{taskStatus:stat,completedOn:tof}
+			});
+			return res;
 	});
 };
 
@@ -170,7 +213,7 @@ cropRepo.prototype.fetchTasks	=	function(user){
 cropRepo.prototype.fetchFis = function(region){
 	that=this;
 	return co(function* (){
-		var fis = yield that.mongodb.collection('userinfo').find({region:region,role:fi}).toArray();
+		var fis = yield that.mongodb.collection('userinfo').find({region:region,role:'fi'}).toArray();
 		return fis;
 	});
 };

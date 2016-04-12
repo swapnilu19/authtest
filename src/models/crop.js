@@ -3,6 +3,7 @@ var _ = require('lodash');
 function Crop(){
 	this.crop						="",
 	this.region					="",
+	this.locat					="",
 	this.area						="",
 	this.time						="",
 	this.time_sowed			=0,
@@ -19,6 +20,7 @@ Crop.fromSrc=function(src,data){
 			_.each([
 				'crop',
 				'region',
+				'locat',
 				'area',
 				'time',
 				'time_sowed',

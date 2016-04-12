@@ -187,6 +187,44 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
 
 	/////////////////////////////////////////////////////////////////////
 
+	app.get('/sd/fi/req',wrap(function*(req,res){
+		if(req.user && req.user.role=="sd")
+		{
+			var doc = yield croprepo.fetchRequirementsByEmail(req.query.id);
+			//console.log("doc=",doc);
+			res.jsonp(doc);
+		}
+	}));	
+
+	///////////////////////////////////////////////////////////////////
+
+	app.get('/sd/fi/req/stat',wrap(function*(req,res){
+    if(req.user && req.user.role=="sd")
+    {
+			var stat= "No";
+			//console.log("fulfillstat=",req.query.fulfilled);
+			if(req.query.fulfilled=="Fulfilled")
+				stat="Yes";
+			//console.log("stat=",stat);
+      var doc = yield croprepo.updateRequirementStatus(req.query.timeofrequest,req.query.seekeremail,stat);
+      //console.log("doc=",doc);
+      res.jsonp(doc.result.nModified);
+    }
+  }));
+
+	//////////////////////////////////////////////////////////////////
+
+	app.get('/sd/fi/task/stat',wrap(function*(req,res){
+		if(req.user && (req.user.role=="sd" || req.user.role=="fi"))
+		{
+			var doc = yield croprepo.updateTaskStatus(req.query.stat,req.query.id);
+			res.jsonp(doc.result.nModified);
+		}
+	}));
+
+
+	///////////////////////////////////////////////////////////////////
+
 	app.get('/',function(req,res){
 		res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
 		res.render('home',req.user);
@@ -194,7 +232,7 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
 
 	////////////////////////////////////////////////////////////////////
 
-	app.get('/dashboard',function(req,res){
+	app.get('/dashboard',wrap(function*(req,res){
 		res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
 		console.log(req.user);
 		if(req.user)
@@ -208,7 +246,10 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
 						break;
 	
 					case 'sd'	:
-						res.render('sd',req.user);
+						var fi = yield croprepo.fetchFis(req.user.region);
+						var usr=req.user;
+						usr.fi=fi;
+						res.render('sd',usr);
 						break;
 					
 					case 'admin':
@@ -224,7 +265,7 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
 		}
 		else
 			res.redirect('/signin');
-	});
+	}));
 
 	////////////////////////////////////////////////////////////////////
 
@@ -240,18 +281,56 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
 	///////////////////////////////////////////////////////////////////
 
 	app.get('/requirements',wrap(function* (req,res){
-		if(req.user && req.user.role=="fi")
+		if(req.user)
 		{
-			var requirements = yield croprepo.fetchRequirements(req.user);
-			var usr = req.user;
-			usr.requirements=requirements;
-			res.render('requirements',usr);
+			if(req.user.role=="fi")
+			{
+				var requirements = yield croprepo.fetchRequirements(req.user);
+				var usr = req.user;
+				usr.requirements=requirements;
+				res.render('requirements',usr);
+			}
+			else if(req.user.role=="sd")
+			{
+				var requirements = yield croprepo.fetchAllRequirements(req.user);
+        var usr = req.user;
+        usr.requirements=requirements;
+        res.render('all_requirements',usr);
+			}
 		}
 		else
 			res.redirect('/');
 	}));
 
 	///////////////////////////////////////////////////////////////////
+
+	app.get("/pend_requirements",wrap(function*(req,res){
+		if(req.user &&req.user.role=="sd")
+		{
+			var requirements = yield croprepo.fetchPendingRequirements(req.user);
+			var usr= req.user;
+			usr.requirements = requirements;
+			res.render('pending_requirements',usr);
+		}
+		else
+			res.redirect('/');
+	}));
+
+	///////////////////////////////////////////////////////////////////
+
+	app.get("/ful_requirements",wrap(function*(req,res){
+    if(req.user &&req.user.role=="sd")
+    {
+      var requirements = yield croprepo.fetchFulfilledRequirements(req.user);
+      var usr= req.user;
+      usr.requirements = requirements;
+      res.render('fulfilled_requirements',usr);
+    }
+    else
+      res.redirect('/');
+  }));
+
+  ///////////////////////////////////////////////////////////////////
 
 	app.post('/add_requirement',wrap(function* (req,res){
 		if(req.user && req.user.role=="fi")
@@ -261,9 +340,10 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
 				seekeremail			:	req.user.email,
 				crop						:	req.body.req_crop,
 				items						:	req.body.items,
-				region					:	req.body.req_region,
+				region					:	req.user.region,
+				locat						:	req.user.locat,
 				fulfilled				:	"No",
-				time_fullfilled	:	null,
+				time_fulfilled	:	null,
 				timeofrequest		:	(new Date()).getTime(),
 			};
 			var result	=	yield croprepo.addRequirement(requirement);
@@ -294,7 +374,8 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
     {
       var crop = {
         crop        : req.body.crop_name,
-        region      : req.body.region,
+        region      : req.user.region,
+				locat				:	req.user.locat,
         area        : req.body.area,
         time        : (new Date()).getTime(),
         time_sowed  : req.body.seed_time,
@@ -313,12 +394,22 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
 	//////////////////////////////////////////////////////////////////
 
 	 app.get('/tasks',wrap(function* (req,res){
-    if(req.user && req.user.role=="fi")
+    if(req.user)
     {
-      var tasks = yield croprepo.fetchTasks(req.user);
-      var usr = req.user;
-      usr.tasks=tasks;
-      res.render('tasks',usr);
+			if(req.user.role=="fi")
+			{
+      	var tasks = yield croprepo.fetchTasks(req.user);
+      	var usr = req.user;
+      	usr.tasks=tasks;
+      	res.render('fi_tasks',usr);
+			}
+			else if(req.user.role=="sd")
+			{
+				var tasks = yield croprepo.fetchTasks(req.user);
+				var usr  =req.user;
+				usr.tasks = tasks;
+				res.render('tasks',usr);
+			}
     }
     else
       res.redirect('/');
@@ -386,7 +477,7 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
   }));
 
 	/////////////////////////////////////////////////////////////////
-
+/*
 	app.use(function (req, res, next) {
       next(new Error('NOT_FOUND'));
     });
@@ -426,6 +517,6 @@ module.exports= function(db,passportRepo,fbrepo,twitterrepo,googlerepo,croprepo)
       res.json(response);
 	});
 	/////////////////////////////////////////////////////////////////
-
+*/
 	return app;
 };
